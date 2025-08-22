@@ -90,7 +90,7 @@ class DoseCertaApp:
                 ft.View(
                     route="/dashboard",
                     controls=[
-                        ft.AppBar(title=ft.Text("Dashboard"), bgcolor=ft.colors.SURFACE_VARIANT),
+                        ft.AppBar(title=ft.Text("Dashboard"), bgcolor=ft.Colors.SURFACE_VARIANT),
                         ft.Text(f"Bem-vindo, {user_name}!", size=20)
                     ],
                     vertical_alignment=ft.MainAxisAlignment.CENTER,

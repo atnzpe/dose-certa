@@ -29,7 +29,7 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
         label="Seu Nome Completo",
         value=user.get('nome', ''), # Preenche com o nome atual do usuário.
         width=300,
-        prefix_icon=ft.icons.PERSON,
+        prefix_icon=ft.Icons.PERSON,
         border_radius=ft.border_radius.all(10),
     )
     
@@ -37,7 +37,7 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
         label="Nome do Estabelecimento",
         hint_text="Ex: Bar do Gleyson",
         width=300,
-        prefix_icon=ft.icons.STORE,
+        prefix_icon=ft.Icons.STORE,
         border_radius=ft.border_radius.all(10),
     )
     
@@ -45,7 +45,7 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
         label="Primeiro Local de Contagem",
         value="Estoque Padrão", # Sugestão padrão.
         width=300,
-        prefix_icon=ft.icons.INVENTORY,
+        prefix_icon=ft.Icons.INVENTORY,
         border_radius=ft.border_radius.all(10),
     )
     
@@ -91,7 +91,7 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
         text="Salvar e Começar",
         width=300,
         height=45,
-        icon=ft.icons.SAVE,
+        icon=ft.Icons.SAVE,
         on_click=handle_save_click
     )
 
@@ -102,7 +102,7 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
             ft.Container(
                 content=ft.Column(
                     [
-                        ft.Icon(ft.icons.WAVING_HAND, size=32),
+                        ft.Icon(ft.Icons.WAVING_HAND, size=32),
                         ft.Text("Bem-vindo(a)!", size=28, weight=ft.FontWeight.BOLD),
                         ft.Text(
                             "Vamos configurar sua conta rapidamente.",

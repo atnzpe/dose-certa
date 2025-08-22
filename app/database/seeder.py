@@ -89,6 +89,8 @@ INITIAL_ITEMS = [
     {"nome": "Monin Frutas Vermelhas", "categoria": "Xaropes", "unidade": "Garrafa 700ml"},
     {"nome": "Monin Gengibre", "categoria": "Xaropes", "unidade": "Garrafa 700ml"},
 
+
+
     # Vinhos e Outros
     {"nome": "Martini Rosso", "categoria": "Vinhos", "unidade": "Garrafa 995ml"},
     {"nome": "Vinho Tinto", "categoria": "Vinhos", "unidade": "Garrafa 750ml"},

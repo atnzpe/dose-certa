@@ -3,8 +3,8 @@
 # Local: app/services/auth_service.py
 # =================================================================================
 
-# Módulo para hashing de senhas.
-import hashlib
+# --- ATUALIZADO: Importa a biblioteca bcrypt para hashing seguro de senhas. ---
+import bcrypt
 # Módulo de logging para registrar eventos.
 import logging
 # Importa as funções de consulta ao banco de dados.
@@ -18,32 +18,56 @@ logger = logging.getLogger(__name__)
 
 def _hash_password(password: str) -> str:
     """
-    Gera um hash SHA-256 para uma senha fornecida.
-    NOTA: Em um ambiente de produção, bibliotecas como 'bcrypt' ou 'passlib'
-    são recomendadas por serem mais seguras.
+    Gera um hash seguro para uma senha usando bcrypt.
+    O bcrypt incorpora um "sal" (salt) aleatório para proteger contra ataques
+    de rainbow table.
 
     :param password: A senha em texto plano.
-    :return: A representação hexadecimal do hash da senha.
+    :return: O hash da senha (em formato de string) para ser armazenado no banco de dados.
     """
-    # Converte a senha para bytes, gera o hash e o retorna como uma string hexadecimal.
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    # Converte a senha de string para bytes, que é o formato esperado pelo bcrypt.
+    password_bytes = password.encode('utf-8')
+    # Gera um "sal" aleatório.
+    salt = bcrypt.gensalt()
+    # Gera o hash da senha com o sal.
+    hashed_bytes = bcrypt.hashpw(password_bytes, salt)
+    # Retorna o hash decodificado como string para armazenamento no banco de dados.
+    return hashed_bytes.decode('utf-8')
+
+def _verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verifica se uma senha em texto plano corresponde a um hash bcrypt armazenado.
+
+    :param plain_password: A senha fornecida pelo usuário durante o login.
+    :param hashed_password: O hash da senha armazenado no banco de dados.
+    :return: True se a senha corresponder, False caso contrário.
+    """
+    try:
+        # Converte a senha em texto plano e o hash para bytes.
+        plain_password_bytes = plain_password.encode('utf-8')
+        hashed_password_bytes = hashed_password.encode('utf-8')
+        
+        # A função checkpw do bcrypt compara a senha com o hash de forma segura.
+        return bcrypt.checkpw(plain_password_bytes, hashed_password_bytes)
+    except (ValueError, TypeError) as e:
+        # Captura possíveis erros se o hash armazenado for inválido.
+        logger.error(f"Erro ao verificar a senha. O hash pode estar malformado: {e}")
+        return False
 
 def create_default_user():
     """
     Cria um usuário padrão para fins de teste, se nenhum usuário existir.
+    Agora utiliza o hashing com bcrypt.
     """
     logger.info("Verificando a necessidade de criar um usuário padrão.")
-    # E-mail e senha do usuário padrão.
     default_email = "admin@dosedata.com"
     default_password = "admin"
     
-    # Verifica se o usuário já existe.
     user = queries.get_user_by_email(default_email)
     if user is None:
-        logger.info("Nenhum usuário padrão encontrado. Criando um novo.")
-        # Gera o hash da senha padrão.
+        logger.info("Nenhum usuário padrão encontrado. Criando um novo com hash bcrypt.")
+        # --- ATUALIZADO: Gera o hash da senha padrão usando a nova função. ---
         password_hash = _hash_password(default_password)
-        # Chama a função para criar o usuário no banco de dados.
         queries.create_user(
             nome="Admin Padrão",
             email=default_email,
@@ -55,7 +79,7 @@ def create_default_user():
 
 def authenticate_user(email: str, password: str) -> dict:
     """
-    Autentica um usuário com base no e-mail и na senha.
+    Autentica um usuário com base no e-mail e na senha, agora usando bcrypt.
 
     :param email: O e-mail fornecido pelo usuário.
     :param password: A senha fornecida pelo usuário.
@@ -66,21 +90,19 @@ def authenticate_user(email: str, password: str) -> dict:
         logger.warning("Tentativa de login com e-mail ou senha vazios.")
         return None
 
-    # Busca o usuário no banco de dados pelo e-mail.
     user_data = queries.get_user_by_email(email)
 
-    # Se nenhum usuário for encontrado, a autenticação falha.
     if user_data is None:
         logger.warning(f"Tentativa de login falhou: e-mail '{email}' não encontrado.")
         return None
 
-    # Gera o hash da senha fornecida pelo usuário.
-    provided_password_hash = _hash_password(password)
-
-    # Compara o hash da senha fornecida com o hash armazenado no banco de dados.
-    if provided_password_hash == user_data['senha_hash']:
+    # --- ATUALIZADO: Usa a função de verificação do bcrypt. ---
+    # Pega o hash armazenado no banco de dados.
+    stored_hash = user_data['senha_hash']
+    
+    # Compara a senha fornecida com o hash armazenado.
+    if _verify_password(password, stored_hash):
         logger.info(f"Usuário '{email}' autenticado com sucesso.")
-        # Retorna os dados do usuário como um dicionário para facilitar o uso.
         return dict(user_data)
     else:
         logger.warning(f"Tentativa de login falhou: senha incorreta para o e-mail '{email}'.")

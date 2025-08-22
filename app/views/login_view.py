@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 # FUNÇÃO PRINCIPAL DA VIEW
 # =================================================================================
 
-
-# --- CORREÇÃO: A função agora aceita 'on_login_success' como um argumento posicional. ---
 def create_login_view(on_login_success) -> ft.View:
     """
     Cria e retorna a View de Login com todos os seus componentes visuais e lógica.
@@ -25,23 +23,16 @@ def create_login_view(on_login_success) -> ft.View:
     logger.info("Criando a interface gráfica e a lógica da tela de login.")
 
     email_field = ft.TextField(
-        label="E-mail",
-        hint_text="Digite seu e-mail",
-        width=300,
-        keyboard_type=ft.KeyboardType.EMAIL,
-        prefix_icon=ft.Icons.EMAIL_OUTLINED,
+        label="E-mail", hint_text="Digite seu e-mail", width=300,
+        keyboard_type=ft.KeyboardType.EMAIL, prefix_icon=ft.Icons.EMAIL_OUTLINED,
         border_radius=ft.border_radius.all(10),
     )
     password_field = ft.TextField(
-        label="Senha",
-        hint_text="Digite sua senha",
-        width=300,
-        password=True,
-        can_reveal_password=True,
-        prefix_icon=ft.Icons.LOCK_OUTLINE,
+        label="Senha", hint_text="Digite sua senha", width=300,
+        password=True, can_reveal_password=True, prefix_icon=ft.Icons.LOCK_OUTLINE,
         border_radius=ft.border_radius.all(10),
     )
-
+    
     error_text = ft.Text(value="", color=ft.Colors.RED, visible=False)
     progress_ring = ft.ProgressRing(width=20, height=20, stroke_width=2, visible=False)
 
@@ -64,7 +55,7 @@ def create_login_view(on_login_success) -> ft.View:
         else:
             error_text.value = "E-mail ou senha inválidos."
             error_text.visible = True
-
+        
         email_field.disabled = False
         password_field.disabled = False
         login_button.disabled = False
@@ -72,22 +63,23 @@ def create_login_view(on_login_success) -> ft.View:
         e.page.update()
 
     login_button = ft.ElevatedButton(
-        text="Entrar",
-        width=300,
-        height=45,
-        icon=ft.Icons.LOGIN,
-        on_click=handle_login_click,
+        text="Entrar", width=300, height=45, icon=ft.Icons.LOGIN,
+        on_click=handle_login_click
     )
+    
     google_login_button = ft.OutlinedButton(
         text="Login com Google",
         width=300,
         height=45,
         icon=ft.Icons.ACCOUNT_CIRCLE_SHARP,
     )
+    
     signup_text = ft.Row(
-        [ft.Text("Não tem uma conta?"), ft.TextButton("Cadastre-se")],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=5,
+        [
+            ft.Text("Não tem uma conta?"),
+            ft.TextButton("Cadastre-se", on_click=lambda e: e.page.go("/register")),
+        ],
+        alignment=ft.MainAxisAlignment.CENTER, spacing=5,
     )
 
     return ft.View(
@@ -102,10 +94,7 @@ def create_login_view(on_login_success) -> ft.View:
                         password_field,
                         error_text,
                         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
-                        ft.Row(
-                            [login_button, progress_ring],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                        ),
+                        ft.Row([login_button, progress_ring], alignment=ft.MainAxisAlignment.CENTER),
                         google_login_button,
                         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                         signup_text,

@@ -48,23 +48,18 @@ def create_user(nome: str, email: str, senha_hash: str, whatsapp: str = None):
         if conn: conn.close()
 
 # =================================================================================
-# --- NOVAS QUERIES PARA O SEEDER ---
+# QUERIES DO SEEDER (sem alterações)
 # =================================================================================
 
 def find_or_create_category(nome: str) -> int:
-    """
-    Busca uma categoria pelo nome. Se não encontrar, cria uma nova.
-    :param nome: O nome da categoria.
-    :return: O ID da categoria (existente ou recém-criada).
-    """
+    """Busca uma categoria pelo nome. Se não encontrar, cria uma nova."""
     conn = get_db_connection()
     if conn is None: return None
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM categorias WHERE nome = ?", (nome,))
         row = cursor.fetchone()
-        if row:
-            return row['id']
+        if row: return row['id']
         else:
             cursor.execute("INSERT INTO categorias (nome) VALUES (?)", (nome,))
             conn.commit()
@@ -73,20 +68,14 @@ def find_or_create_category(nome: str) -> int:
         if conn: conn.close()
 
 def find_or_create_unit(nome: str, sigla: str) -> int:
-    """
-    Busca uma unidade de medida pelo nome. Se não encontrar, cria uma nova.
-    :param nome: O nome da unidade de medida.
-    :param sigla: A sigla da unidade de medida.
-    :return: O ID da unidade de medida (existente ou recém-criada).
-    """
+    """Busca uma unidade de medida pelo nome. Se não encontrar, cria uma nova."""
     conn = get_db_connection()
     if conn is None: return None
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM unidades_medida WHERE nome = ?", (nome,))
         row = cursor.fetchone()
-        if row:
-            return row['id']
+        if row: return row['id']
         else:
             cursor.execute("INSERT INTO unidades_medida (nome, sigla) VALUES (?, ?)", (nome, sigla))
             conn.commit()
@@ -95,12 +84,7 @@ def find_or_create_unit(nome: str, sigla: str) -> int:
         if conn: conn.close()
 
 def create_item_if_not_exists(nome: str, id_categoria: int, id_unidade_medida: int):
-    """
-    Cria um novo item no banco de dados, somente se ele não existir.
-    :param nome: O nome do item.
-    :param id_categoria: O ID da categoria do item.
-    :param id_unidade_medida: O ID da unidade de medida do item.
-    """
+    """Cria um novo item no banco de dados, somente se ele não existir."""
     conn = get_db_connection()
     if conn is None: return
     try:
@@ -116,6 +100,60 @@ def create_item_if_not_exists(nome: str, id_categoria: int, id_unidade_medida: i
             logger.info(f"Item padrão '{nome}' inserido no banco de dados.")
     except Exception as e:
         logger.error(f"Erro ao inserir o item '{nome}': {e}", exc_info=True)
+        conn.rollback()
+    finally:
+        if conn: conn.close()
+        
+# =================================================================================
+# --- NOVAS QUERIES PARA O ONBOARDING ---
+# =================================================================================
+
+def has_establishment(user_id: int) -> bool:
+    """
+    Verifica se um usuário já possui um estabelecimento cadastrado.
+    :param user_id: O ID do usuário.
+    :return: True se o usuário já tem um estabelecimento, False caso contrário.
+    """
+    conn = get_db_connection()
+    if conn is None: return False
+    try:
+        cursor = conn.execute("SELECT 1 FROM estabelecimentos WHERE id_usuario = ?", (user_id,))
+        return cursor.fetchone() is not None
+    finally:
+        if conn: conn.close()
+
+def complete_onboarding(user_id: int, user_name: str, establishment_name: str, location_name: str):
+    """
+    Salva os dados do onboarding, criando o estabelecimento e o local de estoque.
+    :param user_id: ID do usuário que está completando o onboarding.
+    :param user_name: Nome do usuário (pode ter sido atualizado).
+    :param establishment_name: Nome do novo estabelecimento.
+    :param location_name: Nome do primeiro local de estoque.
+    """
+    conn = get_db_connection()
+    if conn is None: return
+    try:
+        cursor = conn.cursor()
+        # 1. Atualiza o nome do usuário.
+        cursor.execute("UPDATE usuarios SET nome = ? WHERE id = ?", (user_name, user_id))
+        
+        # 2. Cria o estabelecimento.
+        cursor.execute(
+            "INSERT INTO estabelecimentos (id_usuario, nome) VALUES (?, ?)",
+            (user_id, establishment_name)
+        )
+        establishment_id = cursor.lastrowid # Pega o ID do estabelecimento recém-criado.
+        
+        # 3. Cria o local de estoque padrão.
+        cursor.execute(
+            "INSERT INTO locais_estoque (id_estabelecimento, nome) VALUES (?, ?)",
+            (establishment_id, location_name)
+        )
+        
+        conn.commit()
+        logger.info(f"Onboarding concluído para o usuário ID {user_id}.")
+    except Exception as e:
+        logger.error(f"Erro ao completar o onboarding para o usuário ID {user_id}: {e}", exc_info=True)
         conn.rollback()
     finally:
         if conn: conn.close()

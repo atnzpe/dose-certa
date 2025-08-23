@@ -6,6 +6,8 @@
 import flet as ft
 import logging
 from app.services import auth_service
+# --- NOVO: Importa as queries para verificar o número de usuários ---
+from app.database import queries
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +18,14 @@ logger = logging.getLogger(__name__)
 def create_login_view(on_login_success) -> ft.View:
     """
     Cria e retorna a View de Login com todos os seus componentes visuais e lógica.
-
-    :param on_login_success: Uma função (callback) a ser chamada quando o login for bem-sucedido.
-    :return: Um objeto ft.View configurado para a tela de login.
     """
     logger.info("Criando a interface gráfica e a lógica da tela de login.")
+
+    # --- NOVO: Verifica se o cadastro deve ser permitido ---
+    # Conta quantos usuários existem no banco de dados.
+    user_count = queries.count_users()
+    # O cadastro só é permitido se não houver nenhum usuário.
+    is_registration_allowed = user_count == 0
 
     email_field = ft.TextField(
         label="E-mail", hint_text="Digite seu e-mail", width=300,
@@ -37,6 +42,7 @@ def create_login_view(on_login_success) -> ft.View:
     progress_ring = ft.ProgressRing(width=20, height=20, stroke_width=2, visible=False)
 
     def handle_login_click(e):
+        # ... (lógica de login permanece a mesma)
         email_field.disabled = True
         password_field.disabled = True
         login_button.disabled = True
@@ -71,13 +77,22 @@ def create_login_view(on_login_success) -> ft.View:
         text="Login com Google",
         width=300,
         height=45,
-        icon=ft.Icons.ACCOUNT_CIRCLE_SHARP,
+        icon=ft.Icons.LANGUAGE,
     )
     
+    # --- ATUALIZADO: Lógica para desabilitar o botão de cadastro ---
+    signup_button = ft.TextButton(
+        "Cadastre-se",
+        on_click=lambda e: e.page.go("/register"),
+        # Desabilita o botão se o registro não for permitido.
+        disabled=not is_registration_allowed,
+        tooltip="Apenas um usuário é permitido na versão gratuita" if not is_registration_allowed else None
+    )
+
     signup_text = ft.Row(
         [
             ft.Text("Não tem uma conta?"),
-            ft.TextButton("Cadastre-se", on_click=lambda e: e.page.go("/register")),
+            signup_button,
         ],
         alignment=ft.MainAxisAlignment.CENTER, spacing=5,
     )

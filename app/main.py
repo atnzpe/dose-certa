@@ -7,11 +7,12 @@ import logging
 
 from app.services import auth_service
 from app.views.login_view import create_login_view
-# --- NOVO: Importa a view de onboarding ---
 from app.views.onboarding_view import create_onboarding_view
+from app.views.register_view import create_register_view
+from app.views.dashboard_view import create_dashboard_view
 from app.database.seeder import seed_database
-# --- NOVO: Importa a query para verificar o onboarding ---
 from app.database import queries
+from app.database.database import initialize_database
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -29,31 +30,34 @@ class DoseCertaApp:
         self.setup_page()
         self.setup_routes()
         
-        auth_service.create_default_user()
+        initialize_database()
+        # Removido a criação de usuário padrão daqui para permitir o cadastro do primeiro usuário.
+        # auth_service.create_default_user() 
         seed_database()
         
         logger.info("Navegando para a rota inicial ('/').")
         self.page.go("/")
 
     def on_login_success(self, user: dict):
-        """
-        Callback chamado após a autenticação. Verifica se o onboarding é necessário.
-        """
         self.current_user = user
-        # --- NOVO: Lógica de verificação do onboarding ---
         if queries.has_establishment(user['id']):
-            logger.info(f"Usuário ID {user['id']} já completou o onboarding. Navegando para o dashboard.")
             self.page.go("/dashboard")
         else:
-            logger.info(f"Usuário ID {user['id']} precisa completar o onboarding. Navegando para /onboarding.")
             self.page.go("/onboarding")
 
     def on_onboarding_complete(self):
-        """
-        Callback chamado pela view de onboarding após salvar os dados.
-        """
-        logger.info("Onboarding concluído. Navegando para o dashboard.")
         self.page.go("/dashboard")
+
+    def on_register_success(self):
+        logger.info("Cadastro bem-sucedido. Redirecionando para a tela de login.")
+        self.page.go("/")
+
+    # --- NOVA FUNÇÃO DE LOGOUT ---
+    def logout(self):
+        """Limpa a sessão do usuário e retorna para a tela de login."""
+        logger.info(f"Usuário {self.current_user['email']} deslogado.")
+        self.current_user = None
+        self.page.go("/")
 
     def setup_page(self):
         self.page.title = "App Dose Certa"
@@ -73,9 +77,11 @@ class DoseCertaApp:
         self.page.views.clear()
 
         if self.page.route == "/":
-            self.page.views.append(create_login_view(on_login_success=self.on_login_success))
+            self.page.views.append(create_login_view(self.on_login_success))
         
-        # --- NOVO: Rota para a tela de onboarding ---
+        elif self.page.route == "/register":
+            self.page.views.append(create_register_view(self.on_register_success))
+
         elif self.page.route == "/onboarding" and self.current_user:
             self.page.views.append(
                 create_onboarding_view(
@@ -85,25 +91,24 @@ class DoseCertaApp:
             )
             
         elif self.page.route == "/dashboard" and self.current_user:
-            user_name = self.current_user.get('nome', 'Usuário')
             self.page.views.append(
-                ft.View(
-                    route="/dashboard",
-                    controls=[
-                        ft.AppBar(title=ft.Text("Dashboard"), bgcolor=ft.Colors.SURFACE_VARIANT),
-                        ft.Text(f"Bem-vindo, {user_name}!", size=20)
-                    ],
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                # --- ATUALIZADO: Passa a função de logout para a view ---
+                create_dashboard_view(
+                    user=self.current_user,
+                    page=self.page,
+                    on_logout=self.logout
                 )
             )
         else:
             logger.warning("Acesso não autorizado ou rota inválida. Redirecionando para o login.")
-            self.page.views.append(create_login_view(on_login_success=self.on_login_success))
+            self.page.views.append(create_login_view(self.on_login_success))
         
         self.page.update()
 
     def on_view_pop(self, view: ft.View):
+        if view.route == "/dashboard":
+            return
+        
         self.page.views.pop()
         top_view = self.page.views[-1]
         self.page.go(top_view.route)

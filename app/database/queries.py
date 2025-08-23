@@ -8,9 +8,24 @@ from .database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
-# =================================================================================
-# QUERIES DE USUÁRIO
-# =================================================================================
+# --- NOVA QUERY PARA VERIFICAR O NÚMERO DE USUÁRIOS ---
+def count_users() -> int:
+    """
+    Conta o número total de usuários registrados no banco de dados.
+    :return: Um inteiro representando o total de usuários.
+    """
+    conn = get_db_connection()
+    if conn is None: return 0
+    try:
+        cursor = conn.execute("SELECT COUNT(id) FROM usuarios")
+        # fetchone() em uma query COUNT retorna uma tupla com um único valor, ex: (1,)
+        count = cursor.fetchone()[0]
+        return count
+    except Exception as e:
+        logger.error(f"Erro ao contar usuários: {e}", exc_info=True)
+        return 0 # Retorna 0 em caso de erro para evitar bloqueios indevidos.
+    finally:
+        if conn: conn.close()
 
 def get_user_by_email(email: str):
     """Busca um usuário no banco de dados pelo seu e-mail."""
@@ -46,10 +61,6 @@ def create_user(nome: str, email: str, senha_hash: str, whatsapp: str = None):
         conn.rollback()
     finally:
         if conn: conn.close()
-
-# =================================================================================
-# QUERIES DO SEEDER (sem alterações)
-# =================================================================================
 
 def find_or_create_category(nome: str) -> int:
     """Busca uma categoria pelo nome. Se não encontrar, cria uma nova."""
@@ -104,16 +115,8 @@ def create_item_if_not_exists(nome: str, id_categoria: int, id_unidade_medida: i
     finally:
         if conn: conn.close()
         
-# =================================================================================
-# --- NOVAS QUERIES PARA O ONBOARDING ---
-# =================================================================================
-
 def has_establishment(user_id: int) -> bool:
-    """
-    Verifica se um usuário já possui um estabelecimento cadastrado.
-    :param user_id: O ID do usuário.
-    :return: True se o usuário já tem um estabelecimento, False caso contrário.
-    """
+    """Verifica se um usuário já possui um estabelecimento cadastrado."""
     conn = get_db_connection()
     if conn is None: return False
     try:
@@ -123,37 +126,40 @@ def has_establishment(user_id: int) -> bool:
         if conn: conn.close()
 
 def complete_onboarding(user_id: int, user_name: str, establishment_name: str, location_name: str):
-    """
-    Salva os dados do onboarding, criando o estabelecimento e o local de estoque.
-    :param user_id: ID do usuário que está completando o onboarding.
-    :param user_name: Nome do usuário (pode ter sido atualizado).
-    :param establishment_name: Nome do novo estabelecimento.
-    :param location_name: Nome do primeiro local de estoque.
-    """
+    """Salva os dados do onboarding, criando o estabelecimento e o local de estoque."""
     conn = get_db_connection()
     if conn is None: return
     try:
         cursor = conn.cursor()
-        # 1. Atualiza o nome do usuário.
         cursor.execute("UPDATE usuarios SET nome = ? WHERE id = ?", (user_name, user_id))
-        
-        # 2. Cria o estabelecimento.
         cursor.execute(
             "INSERT INTO estabelecimentos (id_usuario, nome) VALUES (?, ?)",
             (user_id, establishment_name)
         )
-        establishment_id = cursor.lastrowid # Pega o ID do estabelecimento recém-criado.
-        
-        # 3. Cria o local de estoque padrão.
+        establishment_id = cursor.lastrowid
         cursor.execute(
             "INSERT INTO locais_estoque (id_estabelecimento, nome) VALUES (?, ?)",
             (establishment_id, location_name)
         )
-        
         conn.commit()
         logger.info(f"Onboarding concluído para o usuário ID {user_id}.")
     except Exception as e:
         logger.error(f"Erro ao completar o onboarding para o usuário ID {user_id}: {e}", exc_info=True)
         conn.rollback()
+    finally:
+        if conn: conn.close()
+
+def get_establishment_by_user_id(user_id: int):
+    """
+    Busca o estabelecimento de um usuário pelo ID do usuário.
+    :param user_id: O ID do usuário.
+    :return: Um objeto de linha (sqlite3.Row) com os dados do estabelecimento ou None.
+    """
+    conn = get_db_connection()
+    if conn is None: return None
+    try:
+        cursor = conn.execute("SELECT * FROM estabelecimentos WHERE id_usuario = ?", (user_id,))
+        establishment = cursor.fetchone()
+        return establishment
     finally:
         if conn: conn.close()

@@ -49,7 +49,7 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
         border_radius=ft.border_radius.all(10),
     )
     
-    error_text = ft.Text(value="", color=ft.colors.RED, visible=False)
+    error_text = ft.Text(value="", color=ft.Colors.RED, visible=False)
     progress_ring = ft.ProgressRing(width=20, height=20, stroke_width=2, visible=False)
 
     def handle_save_click(e):
@@ -107,14 +107,14 @@ def create_onboarding_view(user: dict, on_complete) -> ft.View:
                         ft.Text(
                             "Vamos configurar sua conta rapidamente.",
                             size=16,
-                            color=ft.colors.WHITE70
+                            color=ft.Colors.WHITE70
                         ),
-                        ft.Divider(height=20, color=ft.colors.TRANSPARENT),
+                        ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                         user_name_field,
                         establishment_name_field,
                         location_name_field,
                         error_text,
-                        ft.Divider(height=10, color=ft.colors.TRANSPARENT),
+                        ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                         ft.Row([save_button, progress_ring], alignment=ft.MainAxisAlignment.CENTER),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,

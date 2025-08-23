@@ -20,9 +20,7 @@ def create_login_view(on_login_success) -> ft.View:
     """
     logger.info("Criando a interface gráfica e a lógica da tela de login.")
 
-    # --- ATUALIZADO: Verifica se já existe um usuário real cadastrado ---
     has_registered_user = queries.has_real_user()
-    # O cadastro só é permitido se não houver um usuário real.
     is_registration_allowed = not has_registered_user
 
     email_field = ft.TextField(
@@ -40,6 +38,7 @@ def create_login_view(on_login_success) -> ft.View:
     progress_ring = ft.ProgressRing(width=20, height=20, stroke_width=2, visible=False)
 
     def handle_login_click(e):
+        # ... (lógica de login permanece a mesma)
         email_field.disabled = True
         password_field.disabled = True
         login_button.disabled = True
@@ -63,6 +62,19 @@ def create_login_view(on_login_success) -> ft.View:
         login_button.disabled = False
         progress_ring.visible = False
         e.page.update()
+        
+    # --- NOVA FUNÇÃO: Manipulador para "Esqueceu a senha" ---
+    def handle_forgot_password(e):
+        """
+        Exibe uma mensagem informativa sobre a recuperação de senha.
+        """
+        page = e.page
+        page.snack_bar = ft.SnackBar(
+            content=ft.Text("A recuperação de senha estará disponível na versão online."),
+            show_close_icon=True,
+        )
+        page.snack_bar.open = True
+        page.update()
 
     login_button = ft.ElevatedButton(
         text="Entrar", width=300, height=45, icon=ft.Icons.LOGIN,
@@ -90,6 +102,12 @@ def create_login_view(on_login_success) -> ft.View:
         ],
         alignment=ft.MainAxisAlignment.CENTER, spacing=5,
     )
+    
+    # --- NOVO: Botão "Esqueceu a senha" ---
+    forgot_password_button = ft.TextButton(
+        "Esqueceu a senha?",
+        on_click=handle_forgot_password,
+    )
 
     return ft.View(
         route="/",
@@ -101,15 +119,17 @@ def create_login_view(on_login_success) -> ft.View:
                         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                         email_field,
                         password_field,
+                        # Adiciona o botão "Esqueceu a senha" alinhado à direita
+                        ft.Row([forgot_password_button], alignment=ft.MainAxisAlignment.END),
                         error_text,
-                        ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                        ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                         ft.Row([login_button, progress_ring], alignment=ft.MainAxisAlignment.CENTER),
                         google_login_button,
                         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                         signup_text,
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=15,
+                    spacing=10,
                 ),
                 alignment=ft.alignment.center,
                 expand=True,

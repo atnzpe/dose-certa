@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 # FUNÇÃO PRINCIPAL DA VIEW
 # =================================================================================
 
-# --- ATUALIZADO: A função agora recebe um callback 'on_logout' ---
 def create_dashboard_view(user: dict, page: ft.Page, on_logout) -> ft.View:
     """
     Cria e retorna a View principal do Dashboard.
@@ -38,7 +37,7 @@ def create_dashboard_view(user: dict, page: ft.Page, on_logout) -> ft.View:
         on_click=toggle_theme,
     )
     
-    # --- NOVO: Botão de Logout ---
+    # --- Botão de Logout ---
     logout_button = ft.IconButton(
         icon=ft.Icons.LOGOUT,
         tooltip="Sair",
@@ -84,7 +83,7 @@ def create_dashboard_view(user: dict, page: ft.Page, on_logout) -> ft.View:
                 title=ft.Text("Dashboard"),
                 center_title=True,
                 bgcolor=ft.Colors.SURFACE_VARIANT,
-                # --- ATUALIZADO: Adiciona os botões à AppBar ---
+                # Adiciona os botões à AppBar
                 actions=[theme_button, logout_button]
             ),
             ft.Column(

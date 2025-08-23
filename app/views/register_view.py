@@ -111,7 +111,7 @@ def create_register_view(on_register_success) -> ft.View:
     return ft.View(
         route="/register",
         controls=[
-            ft.AppBar(title=ft.Text("Criar Nova Conta"), bgcolor=ft.Colors.SURFACE_VARIANT),
+            ft.AppBar(title=ft.Text("Criar Nova Conta"), bgcolor=ft.Colors.ON_SURFACE_VARIANT),
             ft.Container(
                 content=ft.Column(
                     [

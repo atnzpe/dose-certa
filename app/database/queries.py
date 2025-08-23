@@ -8,43 +8,52 @@ from .database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
-# --- NOVA QUERY PARA VERIFICAR O NÚMERO DE USUÁRIOS ---
 def count_users() -> int:
-    """
-    Conta o número total de usuários registrados no banco de dados.
-    :return: Um inteiro representando o total de usuários.
-    """
+    """Conta o número total de usuários registrados no banco de dados."""
     conn = get_db_connection()
     if conn is None: return 0
     try:
         cursor = conn.execute("SELECT COUNT(id) FROM usuarios")
-        # fetchone() em uma query COUNT retorna uma tupla com um único valor, ex: (1,)
         count = cursor.fetchone()[0]
         return count
     except Exception as e:
         logger.error(f"Erro ao contar usuários: {e}", exc_info=True)
-        return 0 # Retorna 0 em caso de erro para evitar bloqueios indevidos.
+        return 0
+    finally:
+        if conn: conn.close()
+
+# --- NOVA QUERY PARA VERIFICAR USUÁRIO REAL ---
+def has_real_user() -> bool:
+    """
+    Verifica se existe algum usuário "real" (não o admin padrão) no banco.
+    :return: True se existir pelo menos um usuário não-admin, False caso contrário.
+    """
+    conn = get_db_connection()
+    # Assume True para ser seguro e bloquear o registro em caso de erro de conexão.
+    if conn is None: return True
+    try:
+        # Procura por qualquer usuário cujo e-mail seja diferente do admin padrão.
+        cursor = conn.execute("SELECT 1 FROM usuarios WHERE email != ?", ("admin@dosedata.com",))
+        return cursor.fetchone() is not None
+    except Exception as e:
+        logger.error(f"Erro ao verificar a existência de usuário real: {e}", exc_info=True)
+        return True # Bloqueia o registro por segurança em caso de erro.
     finally:
         if conn: conn.close()
 
 def get_user_by_email(email: str):
     """Busca um usuário no banco de dados pelo seu e-mail."""
-    logger.info(f"Buscando usuário com o e-mail: {email}")
     conn = get_db_connection()
     if conn is None: return None
     try:
         cursor = conn.execute("SELECT * FROM usuarios WHERE email = ?", (email,))
         user = cursor.fetchone()
         return user
-    except Exception as e:
-        logger.error(f"Erro ao buscar usuário por e-mail: {e}", exc_info=True)
-        return None
     finally:
         if conn: conn.close()
 
 def create_user(nome: str, email: str, senha_hash: str, whatsapp: str = None):
     """Insere um novo usuário no banco de dados."""
-    logger.info(f"Tentando criar um novo usuário com e-mail: {email}")
     conn = get_db_connection()
     if conn is None: return
     try:
@@ -53,12 +62,8 @@ def create_user(nome: str, email: str, senha_hash: str, whatsapp: str = None):
             (nome, email, senha_hash, whatsapp)
         )
         conn.commit()
-        logger.info(f"Usuário '{email}' criado com sucesso.")
     except conn.IntegrityError:
         logger.warning(f"Usuário com e-mail '{email}' já existe no banco de dados.")
-    except Exception as e:
-        logger.error(f"Erro ao criar usuário: {e}", exc_info=True)
-        conn.rollback()
     finally:
         if conn: conn.close()
 
@@ -108,10 +113,6 @@ def create_item_if_not_exists(nome: str, id_categoria: int, id_unidade_medida: i
                 (nome, id_categoria, id_unidade_medida)
             )
             conn.commit()
-            logger.info(f"Item padrão '{nome}' inserido no banco de dados.")
-    except Exception as e:
-        logger.error(f"Erro ao inserir o item '{nome}': {e}", exc_info=True)
-        conn.rollback()
     finally:
         if conn: conn.close()
         
@@ -142,19 +143,11 @@ def complete_onboarding(user_id: int, user_name: str, establishment_name: str, l
             (establishment_id, location_name)
         )
         conn.commit()
-        logger.info(f"Onboarding concluído para o usuário ID {user_id}.")
-    except Exception as e:
-        logger.error(f"Erro ao completar o onboarding para o usuário ID {user_id}: {e}", exc_info=True)
-        conn.rollback()
     finally:
         if conn: conn.close()
 
 def get_establishment_by_user_id(user_id: int):
-    """
-    Busca o estabelecimento de um usuário pelo ID do usuário.
-    :param user_id: O ID do usuário.
-    :return: Um objeto de linha (sqlite3.Row) com os dados do estabelecimento ou None.
-    """
+    """Busca o estabelecimento de um usuário pelo ID do usuário."""
     conn = get_db_connection()
     if conn is None: return None
     try:

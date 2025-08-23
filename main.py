@@ -5,13 +5,13 @@
 import flet as ft
 import logging
 
-# --- CORREÇÃO: Importações ajustadas para a nova estrutura de arquivos ---
 from app.services import auth_service
 from app.views.login_view import create_login_view
 from app.views.onboarding_view import create_onboarding_view
+from app.views.register_view import create_register_view
+from app.views.dashboard_view import create_dashboard_view
 from app.database.seeder import seed_database
 from app.database import queries
-# --- CORREÇÃO: Importa a função para criar as tabelas ---
 from app.database.database import initialize_database
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,12 +30,9 @@ class DoseCertaApp:
         self.setup_page()
         self.setup_routes()
         
-        # --- CORREÇÃO CRÍTICA: Ordem de inicialização corrigida ---
-        # 1. Cria as tabelas do banco de dados.
         initialize_database()
-        # 2. Cria o usuário padrão (agora as tabelas já existem).
-        auth_service.create_default_user()
-        # 3. Popula o banco com os itens iniciais.
+        # --- ATUALIZADO: Reativado a criação do usuário padrão para desenvolvimento. ---
+        auth_service.create_default_user() 
         seed_database()
         
         logger.info("Navegando para a rota inicial ('/').")
@@ -44,15 +41,22 @@ class DoseCertaApp:
     def on_login_success(self, user: dict):
         self.current_user = user
         if queries.has_establishment(user['id']):
-            logger.info(f"Usuário ID {user['id']} já completou o onboarding. Navegando para o dashboard.")
             self.page.go("/dashboard")
         else:
-            logger.info(f"Usuário ID {user['id']} precisa completar o onboarding. Navegando para /onboarding.")
             self.page.go("/onboarding")
 
     def on_onboarding_complete(self):
-        logger.info("Onboarding concluído. Navegando para o dashboard.")
         self.page.go("/dashboard")
+
+    def on_register_success(self):
+        logger.info("Cadastro bem-sucedido. Redirecionando para a tela de login.")
+        self.page.go("/")
+
+    def logout(self):
+        """Limpa a sessão do usuário e retorna para a tela de login."""
+        logger.info(f"Usuário {self.current_user['email']} deslogado.")
+        self.current_user = None
+        self.page.go("/")
 
     def setup_page(self):
         self.page.title = "App Dose Certa"
@@ -71,38 +75,47 @@ class DoseCertaApp:
         logger.info(f"Rota alterada para: {self.page.route}")
         self.page.views.clear()
 
-        if self.page.route == "/":
-            # --- CORREÇÃO: Passa o callback como argumento posicional ---
-            self.page.views.append(create_login_view(self.on_login_success))
+        # --- LÓGICA DE ROTEAMENTO REESTRUTURADA ---
         
-        elif self.page.route == "/onboarding" and self.current_user:
-            self.page.views.append(
-                create_onboarding_view(
-                    user=self.current_user,
-                    on_complete=self.on_onboarding_complete
+        # Rotas públicas que não exigem login
+        if self.page.route == "/":
+            self.page.views.append(create_login_view(self.on_login_success))
+        elif self.page.route == "/register":
+            self.page.views.append(create_register_view(self.on_register_success))
+        
+        # Rotas protegidas que exigem um usuário logado
+        elif self.current_user:
+            if self.page.route == "/onboarding":
+                self.page.views.append(
+                    create_onboarding_view(
+                        user=self.current_user,
+                        on_complete=self.on_onboarding_complete
+                    )
                 )
-            )
-            
-        elif self.page.route == "/dashboard" and self.current_user:
-            user_name = self.current_user.get('nome', 'Usuário')
-            self.page.views.append(
-                ft.View(
-                    route="/dashboard",
-                    controls=[
-                        ft.AppBar(title=ft.Text("Dashboard"), bgcolor=ft.Colors.BLUE_GREY_800),
-                        ft.Text(f"Bem-vindo, {user_name}!", size=20)
-                    ],
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            elif self.page.route == "/dashboard":
+                self.page.views.append(
+                    create_dashboard_view(
+                        user=self.current_user,
+                        page=self.page,
+                        on_logout=self.logout
+                    )
                 )
-            )
+            else:
+                # Se o usuário está logado mas a rota é desconhecida, vai para o dashboard
+                logger.warning(f"Rota desconhecida '{self.page.route}' para usuário logado. Redirecionando para o dashboard.")
+                self.page.go("/dashboard")
+        
+        # Se a rota não for pública e o usuário não estiver logado, redireciona para o login
         else:
-            logger.warning("Acesso não autorizado ou rota inválida. Redirecionando para o login.")
+            logger.warning("Acesso não autorizado a uma rota protegida. Redirecionando para o login.")
             self.page.views.append(create_login_view(self.on_login_success))
         
         self.page.update()
 
     def on_view_pop(self, view: ft.View):
+        if view.route == "/dashboard":
+            return
+        
         self.page.views.pop()
         top_view = self.page.views[-1]
         self.page.go(top_view.route)
@@ -114,5 +127,4 @@ def main(page: ft.Page):
     DoseCertaApp(page)
 
 if __name__ == "__main__":
-    # O assets_dir agora aponta para a pasta 'assets' na raiz do projeto.
     ft.app(target=main, assets_dir="assets")

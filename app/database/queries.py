@@ -1,5 +1,5 @@
 # =================================================================================
-# MÓDULO DE CONSULTAS AO BANCO DE DADOS (queries.py)
+# MÓDULO DE CONSULTAS AO BANCO DE DADOS (queries.py) - CORRIGIDO
 # =================================================================================
 
 import logging
@@ -7,10 +7,8 @@ from .database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
-# =================================================================================
-# QUERIES DE USUÁRIOS E AUTENTICAÇÃO
-# =================================================================================
-
+# --- (O início do arquivo com as queries de usuário e onboarding permanece o mesmo) ---
+# ... (cole as funções has_real_user, get_user_by_email, create_user, etc. aqui) ...
 def has_real_user() -> bool:
     """Verifica se existe algum usuário "real" (não o admin padrão) no banco."""
     conn = get_db_connection()
@@ -49,10 +47,6 @@ def create_user(nome: str, email: str, senha_hash: str, whatsapp: str = None):
     finally:
         if conn: conn.close()
 
-# =================================================================================
-# QUERIES DE ONBOARDING E ESTABELECIMENTO
-# =================================================================================
-
 def has_establishment(user_id: int) -> bool:
     """Verifica se um usuário já possui um estabelecimento cadastrado."""
     conn = get_db_connection()
@@ -86,10 +80,6 @@ def get_establishment_by_user_id(user_id: int):
         return cursor.fetchone()
     finally:
         if conn: conn.close()
-
-# =================================================================================
-# QUERIES DE POVOAMENTO (SEEDING)
-# =================================================================================
 
 def find_or_create_category(nome: str) -> int:
     """Busca uma categoria pelo nome. Se não encontrar, cria uma nova."""
@@ -139,20 +129,24 @@ def create_item_if_not_exists(nome: str, id_categoria: int, id_unidade_medida: i
             conn.commit()
     finally:
         if conn: conn.close()
-        
+
 # =================================================================================
-# NOVAS QUERIES PARA O CRUD DE ITENS
+# QUERIES PARA O CRUD DE ITENS - CORRIGIDAS
 # =================================================================================
 
-def get_all_items_with_details():
-    """Busca todos os itens do estoque com detalhes de categoria e unidade."""
-    conn = get_db_connection()
+def get_all_items_with_details(conn=None):
+    """Busca todos os itens do estoque com detalhes. Pode reutilizar uma conexão."""
+    # Se nenhuma conexão for passada, abre uma nova.
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    
     if conn is None: return []
     try:
         cursor = conn.execute("""
             SELECT 
-                i.id, 
-                i.nome, 
+                i.id, i.nome, i.id_categoria, i.id_unidade_medida,
                 c.nome as categoria, 
                 u.nome as unidade 
             FROM itens i
@@ -165,28 +159,39 @@ def get_all_items_with_details():
         logger.error(f"Erro ao buscar todos os itens: {e}", exc_info=True)
         return []
     finally:
-        if conn: conn.close()
+        # Fecha a conexão apenas se ela foi criada dentro desta função.
+        if close_conn and conn: conn.close()
 
-def get_all_categories():
-    """Busca todas as categorias cadastradas."""
-    conn = get_db_connection()
+def get_all_categories(conn=None):
+    """Busca todas as categorias. Pode reutilizar uma conexão."""
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+
     if conn is None: return []
     try:
         cursor = conn.execute("SELECT id, nome FROM categorias ORDER BY nome")
         return [dict(row) for row in cursor.fetchall()]
     finally:
-        if conn: conn.close()
+        if close_conn and conn: conn.close()
 
-def get_all_units():
-    """Busca todas as unidades de medida cadastradas."""
-    conn = get_db_connection()
+def get_all_units(conn=None):
+    """Busca todas as unidades de medida. Pode reutilizar uma conexão."""
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+
     if conn is None: return []
     try:
-        cursor = conn.execute("SELECT id, nome FROM unidades_medida ORDER BY nome")
+        cursor = conn.execute("SELECT id, nome, sigla FROM unidades_medida ORDER BY nome")
         return [dict(row) for row in cursor.fetchall()]
     finally:
-        if conn: conn.close()
+        if close_conn and conn: conn.close()
 
+# --- As funções de escrita (add, update, delete) não precisam de alteração ---
+# Elas são operações atômicas e é aceitável que abram e fechem sua própria conexão.
 def add_item(nome: str, id_categoria: int, id_unidade_medida: int):
     """Adiciona um novo item ao banco de dados."""
     conn = get_db_connection()

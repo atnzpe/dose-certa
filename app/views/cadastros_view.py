@@ -4,16 +4,22 @@
 
 import flet as ft
 import logging
-# --- NOVO: Importa as constantes de estilo ---
 from app.styles.style import AppDimensions, main_button_style
+# --- NOVO: Importa a AppBar reutilizável ---
+from app.components import create_app_bar
 
 logger = logging.getLogger(__name__)
 
-def create_cadastros_view() -> ft.View:
+# --- ATUALIZADO: A view agora aceita page e on_logout como argumentos ---
+def create_cadastros_view(page: ft.Page, on_logout) -> ft.View:
+    """Cria e retorna a View que serve como menu para os cadastros."""
     logger.info("Criando a view de Cadastros.")
 
-    # --- BOTÕES DE NAVEGAÇÃO ---
-    
+    # --- ATUALIZADO: Cria a AppBar e define seu título ---
+    app_bar = create_app_bar(page, on_logout)
+    app_bar.title = ft.Text("Módulo de Cadastros")
+
+    # --- (Definição dos botões permanece a mesma) ---
     cadastro_item_button = ft.ElevatedButton(
         text="Cadastro de Itens", icon=ft.Icons.ADD_BOX_OUTLINED, 
         width=AppDimensions.FIELD_WIDTH, style=main_button_style,
@@ -41,7 +47,7 @@ def create_cadastros_view() -> ft.View:
     # --- ESTRUTURA DA VIEW ---
     return ft.View(
         route="/cadastros",
-        appbar=ft.AppBar(title=ft.Text("Módulo de Cadastros"), center_title=True),
+        appbar=app_bar, # Usa a AppBar padronizada
         controls=[
             ft.Column(
                 [
@@ -52,7 +58,6 @@ def create_cadastros_view() -> ft.View:
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                # --- CORREÇÃO: 'expand' precisa de um valor e adicionado espaçamento ---
                 expand=True,
                 spacing=20,
             )

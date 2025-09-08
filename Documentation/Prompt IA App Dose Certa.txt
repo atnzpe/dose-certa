@@ -6,19 +6,23 @@ App Dose Certa
 
 >> Após realizar o login sera Solicitado, Nome do usuário, Nome do Estabelecimento, Email, Numero do WhatsApp Cadastro do Local de contagem (ex: Estoque Geral, Bar 1, Bar 2), se o usuário não criar um local de contagem sera criado um Local de Contagem "Padrão".
 
+Cada View rem seu próprio botão voltar e botão de tema claro ou escuro
+
+A views voltam sempre para tela de "Dashboard"
+
 >> Na tela principal chamada Dashboard teremos as Seguintes informações:
 
 	- Todos os elementos da tela serão centralizados
 	- Na tela terá um botão para selecionar o tema claro ou escuro
 	- No topo da Tela terá o Nome do Usuário e o Nome do estabelecimento
 	
-	- Botão "Cadastros" de itens / Estoques / Contatos (Explicarei a tela de Cadastro de itens)
+	- Dentro do Botão "Cadastros" deve ter as telas de: Cadastro de itens (CRUD) / Estoques (CRUD) / Unidades de Medid (CRUD) / Clientes / Fornecedores / Fichas Técnicas  Contatos (Explicarei a tela de Cadastro de itens)
 	- Botão Contagem de Estoque (Explicarei a tela de contagem de estoque abaixo)
-	- Botão Incluir Itens (Explicarei a tela de Incluir itens)
-	- Botão Remover Itens (Explicarei no futuro a tela )
+	- Botão Vender Itens (Explicarei a tela de Incluir itens)
+	- Botão Lancar compra de Itens (Explicarei no futuro a tela )
 	- Botão Delivery (Recebe pedidos dos clietes)
 	- Dashboard do cardápio digital dos clientes
-	- Cadastro Fichas técnicas, produção de matéria prima e insumos
+	- 
 	- Botão Relatório  Contagens/itens/ auditoria (Explicarei a tela de relatórios)
 
 >> O Botão Cadastros vai levar para uma view chamada Cadastros
@@ -43,7 +47,9 @@ App Dose Certa
 	itens/
 	auditoria
 
-Incialmente eu quero que voce crie um README e enumero cada passo a passo do roadmap para criação e implmentaçõa do App e suas funcinalidades
+Incialmente eu quero que voce crie um README e enumero cada passo a passo do roadmap para criação e implmentaçõa do App e suas funcinalidadese  as ISSUES caso não tenha arquivos criados
+
+Se tiver arquivos e códigos criadso, verifique se existe as ISSUES de tarefa e em qual ponto estamos,
 
 Siga as regras abaixo:
 
@@ -103,6 +109,7 @@ O código e suas explicações devem seguir um padrão elevado de clareza e deta
 Comentários Abrangentes:
 
 Comente o código linha a linha.
+Inclua Debugger de Log detalhado e claro do que ocorre e registra para que o debugger seja o mais detalhado possivel fazendo com que o suario enontre o erro de forma fácil e rapida
 
 Explique detalhadamente cada classe, função, método, variável, biblioteca e lógica implementada.
 

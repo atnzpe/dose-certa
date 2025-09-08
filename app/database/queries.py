@@ -1,15 +1,15 @@
 # =================================================================================
-# MÓDULO DE CONSULTAS AO BANCO DE DADOS (queries.py) - DEBUGGING COM LOGS
+# MÓDULO DE CONSULTAS AO BANCO DE DADOS (queries.py)
 # =================================================================================
 
 import logging
 from .database import get_db_connection
 
-# Logger específico para este módulo.
 logger = logging.getLogger("DB_QUERIES")
 
+# ... (todas as funções anteriores como get_user_by_email, has_establishment, etc. permanecem aqui) ...
 
-# --- (O início do arquivo com as queries de usuário e onboarding permanece o mesmo) ---
+
 def has_real_user() -> bool:
     conn = get_db_connection()
     if conn is None:
@@ -172,21 +172,13 @@ def create_item_if_not_exists(nome: str, id_categoria: int, id_unidade_medida: i
 
 
 # =================================================================================
-# QUERIES PARA O CRUD DE ITENS - COM LOGS DE DEPURAÇÃO
+# QUERIES PARA O CRUD DE ITENS
 # =================================================================================
 
 
-def get_all_items_with_details(conn=None):
-    """Busca todos os itens do estoque com detalhes. Pode reutilizar uma conexão."""
-    logger.debug("QUERIES: Iniciando get_all_items_with_details.")
-    close_conn = False
+def get_all_items_with_details():
+    conn = get_db_connection()
     if conn is None:
-        logger.debug("QUERIES: Nenhuma conexão fornecida, criando uma nova.")
-        conn = get_db_connection()
-        close_conn = True
-
-    if conn is None:
-        logger.error("QUERIES: Falha ao obter conexão com o banco.")
         return []
     try:
         cursor = conn.execute(
@@ -201,74 +193,55 @@ def get_all_items_with_details(conn=None):
             ORDER BY i.nome
         """
         )
-        results = [dict(row) for row in cursor.fetchall()]
-        logger.info(
-            f"QUERIES: get_all_items_with_details encontrou {len(results)} itens."
-        )
-        logger.debug(f"QUERIES: Dados dos itens retornados: {results}")
-        return results
-    except Exception as e:
-        logger.error(f"QUERIES: Erro em get_all_items_with_details: {e}", exc_info=True)
-        return []
+        return [dict(row) for row in cursor.fetchall()]
     finally:
-        if close_conn and conn:
-            logger.debug("QUERIES: Fechando a conexão criada internamente.")
+        if conn:
             conn.close()
 
 
-def get_all_categories(conn=None):
-    """Busca todas as categorias. Pode reutilizar uma conexão."""
-    logger.debug("QUERIES: Iniciando get_all_categories.")
-    close_conn = False
+# --- NOVA FUNÇÃO ---
+def get_item_by_id(item_id: int):
+    """
+    Busca um item específico pelo seu ID para preencher o formulário de edição.
+    """
+    conn = get_db_connection()
     if conn is None:
-        logger.debug("QUERIES: Nenhuma conexão fornecida, criando uma nova.")
-        conn = get_db_connection()
-        close_conn = True
+        return None
+    try:
+        cursor = conn.execute("SELECT * FROM itens WHERE id = ?", (item_id,))
+        return cursor.fetchone()
+    finally:
+        if conn:
+            conn.close()
 
+
+def get_all_categories():
+    conn = get_db_connection()
     if conn is None:
-        logger.error("QUERIES: Falha ao obter conexão com o banco.")
         return []
     try:
         cursor = conn.execute("SELECT id, nome FROM categorias ORDER BY nome")
-        results = [dict(row) for row in cursor.fetchall()]
-        logger.info(f"QUERIES: get_all_categories encontrou {len(results)} categorias.")
-        logger.debug(f"QUERIES: Dados das categorias retornados: {results}")
-        return results
+        return [dict(row) for row in cursor.fetchall()]
     finally:
-        if close_conn and conn:
-            logger.debug("QUERIES: Fechando a conexão criada internamente.")
+        if conn:
             conn.close()
 
 
-def get_all_units(conn=None):
-    """Busca todas as unidades de medida. Pode reutilizar uma conexão."""
-    logger.debug("QUERIES: Iniciando get_all_units.")
-    close_conn = False
+def get_all_units():
+    conn = get_db_connection()
     if conn is None:
-        logger.debug("QUERIES: Nenhuma conexão fornecida, criando uma nova.")
-        conn = get_db_connection()
-        close_conn = True
-
-    if conn is None:
-        logger.error("QUERIES: Falha ao obter conexão com o banco.")
         return []
     try:
         cursor = conn.execute(
             "SELECT id, nome, sigla FROM unidades_medida ORDER BY nome"
         )
-        results = [dict(row) for row in cursor.fetchall()]
-        logger.info(f"QUERIES: get_all_units encontrou {len(results)} unidades.")
-        logger.debug(f"QUERIES: Dados das unidades retornados: {results}")
-        return results
+        return [dict(row) for row in cursor.fetchall()]
     finally:
-        if close_conn and conn:
-            logger.debug("QUERIES: Fechando a conexão criada internamente.")
+        if conn:
             conn.close()
 
 
 def add_item(nome: str, id_categoria: int, id_unidade_medida: int):
-    """Adiciona um novo item ao banco de dados."""
-    logger.info(f"QUERIES: Tentando adicionar novo item '{nome}'.")
     conn = get_db_connection()
     if conn is None:
         return
@@ -287,8 +260,6 @@ def add_item(nome: str, id_categoria: int, id_unidade_medida: int):
 
 
 def update_item(item_id: int, nome: str, id_categoria: int, id_unidade_medida: int):
-    """Atualiza os dados de um item existente."""
-    logger.info(f"QUERIES: Tentando atualizar o item ID {item_id} para nome '{nome}'.")
     conn = get_db_connection()
     if conn is None:
         return
@@ -305,8 +276,6 @@ def update_item(item_id: int, nome: str, id_categoria: int, id_unidade_medida: i
 
 
 def delete_item(item_id: int):
-    """Exclui um item do banco de dados."""
-    logger.info(f"QUERIES: Tentando excluir o item ID {item_id}.")
     conn = get_db_connection()
     if conn is None:
         return

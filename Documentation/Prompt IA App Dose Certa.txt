@@ -1,8 +1,8 @@
 App Dose Certa
 
->> O app dose certa irá usar Python e Flet na sua composição, banco SQLlite na versão free / trial e banco firebase com recuperação da base de dados através de login com conta google.
+>> O app dose certa irá usar Python e Flet na sua composição, arquitetura  de banco off line first, onde teremos uma base de dados sqlite sincronizando com  firebase com recuperação da base de dados através de login com conta google.
 
->> Tera uma tela de login, e após o login caso não exista um banco de dados, a principio na versão free sqlite (na versão paga escalável para firebase para que seja recuperado através de login google), ira criar um banco de dados com algumas bebidas pre cdastradas. A bebidas estão na aba DADOS da planilha de exemplo.
+>> Tera uma tela de login, e após o login caso não exista um banco de dados, a principio  sqlite (na versão paga escalável para firebase para que seja recuperado através de login google), ira criar um banco de dados com algumas bebidas pre cdastradas. A bebidas estão na aba DADOS da planilha de exemplo.
 
 >> Após realizar o login sera Solicitado, Nome do usuário, Nome do Estabelecimento, Email, Numero do WhatsApp Cadastro do Local de contagem (ex: Estoque Geral, Bar 1, Bar 2), se o usuário não criar um local de contagem sera criado um Local de Contagem "Padrão".
 
@@ -15,6 +15,10 @@ App Dose Certa
 	- Botão "Cadastros" de itens / Estoques / Contatos (Explicarei a tela de Cadastro de itens)
 	- Botão Contagem de Estoque (Explicarei a tela de contagem de estoque abaixo)
 	- Botão Incluir Itens (Explicarei a tela de Incluir itens)
+	- Botão Remover Itens (Explicarei no futuro a tela )
+	- Botão Delivery (Recebe pedidos dos clietes)
+	- Dashboard do cardápio digital dos clientes
+	- Cadastro Fichas técnicas, produção de matéria prima e insumos
 	- Botão Relatório  Contagens/itens/ auditoria (Explicarei a tela de relatórios)
 
 >> O Botão Cadastros vai levar para uma view chamada Cadastros
@@ -22,8 +26,10 @@ App Dose Certa
 	Botão cadastro de item
 	Botão Cdastro de Local de estoque
 	Botão Cadastro de Unidade de Medida
-	Botão cadastro de email
-	Botão cadastro de numero de telefone
+	Contorle do cadastro de usuário
+	cadastro de ficahs técnicas
+	cadastro de fichss técnicas de bebidas que são controladas por peso
+	
 	Botão 'Voltar'
 
 >> Botão Contagem de estoque leva para view "Contagem de estoque"

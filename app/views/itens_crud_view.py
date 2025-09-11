@@ -11,7 +11,7 @@ logger = logging.getLogger("ItensCRUDView")
 
 class ItensCRUDView(ft.View):
     """
-    View responsável por LISTAR os itens e gerenciar a exclusão.
+    View responsável por LISTAR os itens e gerir a exclusão.
     """
     def __init__(self, page: ft.Page, on_logout):
         super().__init__()
@@ -40,7 +40,6 @@ class ItensCRUDView(ft.View):
                         ft.ElevatedButton(
                             "Adicionar Novo Item",
                             icon=ft.Icons.ADD,
-                            # Ação: Navega para a nova rota do formulário de criação.
                             on_click=lambda e: self.page.go("/cadastros/item/novo")
                         )
                     ],
@@ -72,13 +71,11 @@ class ItensCRUDView(ft.View):
                         ft.DataCell(ft.Row([
                             ft.IconButton(
                                 ft.Icons.EDIT,
-                                # Ação: Navega para a rota de edição com o ID do item.
                                 on_click=lambda e, item_id=item['id']: self.page.go(f"/cadastros/item/editar/{item_id}"),
                                 tooltip="Editar"
                             ),
                             ft.IconButton(
                                 ft.Icons.DELETE,
-                                # Ação: Abre o diálogo de confirmação para exclusão.
                                 on_click=lambda e, item_id=item['id']: self.open_delete_dialog(item_id),
                                 tooltip="Excluir"
                             ),
@@ -86,7 +83,6 @@ class ItensCRUDView(ft.View):
                     ])
                 )
             
-            # Se uma mensagem de sucesso for passada (pelo callback do formulário), exibe-a.
             if success_message:
                 self.show_snackbar(success_message, ft.Colors.GREEN)
             else:
@@ -103,14 +99,12 @@ class ItensCRUDView(ft.View):
             logger.info(f"AÇÃO DO USUÁRIO: Confirmou a exclusão do item ID: {item_id}.")
             try:
                 queries.delete_item(item_id)
-                # Passa a instância do diálogo para garantir que o correto seja fechado.
                 self.close_dialog(dialog)
                 self.load_and_update_table("Item excluído com sucesso!")
             except Exception as ex:
                 logger.error(f"Erro ao excluir item: {ex}", exc_info=True)
                 self.show_snackbar("Erro ao excluir o item.", ft.Colors.RED)
         
-        # Cria a instância do diálogo localmente.
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("Confirmar Exclusão"),
@@ -122,7 +116,6 @@ class ItensCRUDView(ft.View):
             actions_alignment=ft.MainAxisAlignment.END,
         )
         
-        # Atribui ao page.dialog e abre.
         self.page.dialog = dialog
         dialog.open = True
         self.page.update()

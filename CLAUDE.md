@@ -32,7 +32,7 @@
 
 ## Regras que não mudam
 
-- **LGPD:** banco com dados de usuário **nunca** no Git. O `dose_certa.db` que hoje está no repositório tem 2 cadastros de usuário e
-  precisa sair dele e do histórico (decisão pendente do Gleyson). O app deve criar o banco vazio no primeiro uso.
+- **LGPD:** banco com dados de usuário **nunca** no Git (o `.gitignore` barra `*.db`). Em 15/11/2026 o `dose_certa.db` saiu do repositório e de todo o histórico.
+  O app cria o banco vazio no primeiro uso (`initialize_database`).
 - **Nenhuma senha, chave ou token** (Firebase incluído) no repositório nem dentro do APK. Senha sempre com hash (bcrypt).
 - **Código comentado para qualquer pessoa entender** (regra inegociável do Gleyson): vale para todo arquivo criado ou alterado.

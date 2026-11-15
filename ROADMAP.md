@@ -15,7 +15,7 @@
 
 ## Agora: preparar o app
 
-1. [ ] **LGPD:** tirar o `dose_certa.db` do repositório e do histórico; o app cria o banco vazio no primeiro uso; `.gitignore` para `*.db`
+1. [x] **LGPD (15/11/2026):** `dose_certa.db` tirado do repositório e de todo o histórico; o app cria o banco vazio no primeiro uso; `.gitignore` para `*.db`
 2. [ ] Conferir as issues abertas (#4 locais de estoque, #5 unidades, #6 fichas técnicas, #7 e #8 navegação)
 
 ## Versão 1 no celular: contar, vender, relatório
